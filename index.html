@@ -1,0 +1,760 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080808">
+<title>Nur Vakti</title>
+
+<style>
+:root {
+  --bg:#080808;
+  --panel:#151515;
+  --gold:#e8c15d;
+  --light:#ffe6a0;
+  --muted:#a6a6a6;
+  --border:#37301d;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  padding-bottom:90px
+}
+button,select{font:inherit}
+button{cursor:pointer}
+header{
+  position:sticky;top:0;z-index:10;background:#090909;
+  border-bottom:1px solid var(--border);
+  padding:15px 16px;display:flex;align-items:center;
+  justify-content:space-between;gap:10px
+}
+.logo{font-size:22px;font-weight:900;color:var(--gold)}
+.location-btn{
+  background:#171717;color:var(--light);
+  border:1px solid var(--gold);border-radius:20px;
+  padding:9px 12px;max-width:58%;font-size:13px
+}
+main{max-width:650px;margin:auto;padding:16px}
+.page{display:none}
+.page.active{display:block}
+.card{
+  background:linear-gradient(145deg,#191919,#101010);
+  border:1px solid var(--border);border-radius:18px;
+  padding:18px;margin-bottom:15px
+}
+h1,h2,h3,p{margin-top:0}
+h2{font-size:20px;color:var(--light)}
+h3{font-size:16px}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+.gold{color:var(--gold)}
+.center{text-align:center}
+.clock{
+  font-size:44px;font-weight:800;color:var(--gold);
+  letter-spacing:2px;margin:12px 0
+}
+.date-text{color:var(--muted);font-size:13px}
+.next-prayer{
+  text-align:center;padding:24px 10px;
+  background:radial-gradient(ellipse at top,#392c0c,#151515 70%)
+}
+.next-name{font-size:28px;font-weight:800;color:var(--gold)}
+.prayer-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:10px
+}
+.prayer{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px;background:#171717;border:1px solid #302a1b;
+  border-radius:13px
+}
+.prayer span:first-child{color:#ddd;font-size:14px}
+.prayer strong{color:var(--gold)}
+.btn{
+  background:var(--gold);color:#17120a;border:0;
+  padding:12px 16px;border-radius:11px;font-weight:800
+}
+.btn-outline{
+  background:transparent;color:var(--gold);
+  border:1px solid var(--gold);padding:11px 14px;
+  border-radius:11px
+}
+.full{width:100%;margin-top:10px}
+.nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:20;
+  background:#101010;border-top:1px solid var(--border);
+  display:flex;justify-content:space-around;
+  padding:8px 2px max(8px,env(safe-area-inset-bottom))
+}
+.nav button{
+  background:transparent;border:0;color:#aaa;
+  font-size:10px;display:flex;flex-direction:column;
+  align-items:center;gap:5px;padding:6px 3px;min-width:0
+}
+.nav button b{font-size:20px;font-weight:400}
+.nav button.active{color:var(--gold)}
+select{
+  background:#101010;color:white;border:1px solid #514426;
+  padding:12px;border-radius:10px;width:100%;margin:6px 0 14px
+}
+label{font-size:13px;color:var(--light)}
+.modal{
+  display:none;position:fixed;inset:0;z-index:50;
+  background:#000d;align-items:center;justify-content:center;padding:18px
+}
+.modal.show{display:flex}
+.modal-box{
+  width:100%;max-width:440px;background:#151515;
+  border:1px solid var(--gold);border-radius:20px;padding:20px;
+  max-height:85vh;overflow:auto
+}
+.close-row{display:flex;justify-content:space-between;align-items:center}
+.close-row button{background:none;border:0;color:white;font-size:25px}
+.verse-text{font-size:19px;line-height:1.9;color:#f3dfaa}
+.counter{font-size:65px;color:var(--gold);font-weight:900;margin:20px}
+.counter-btn{
+  width:190px;height:190px;border-radius:50%;
+  background:radial-gradient(circle,#3a2c0b,#17130a);
+  border:3px solid var(--gold);color:var(--gold);font-size:20px
+}
+.list-item{
+  padding:14px 0;border-bottom:1px solid #302a1b;line-height:1.7
+}
+.heart{color:var(--gold);background:none;border:0;font-size:23px}
+.premium-price{font-size:29px;color:var(--gold);font-weight:900}
+.premium-card{border:1px solid var(--gold);border-radius:16px;padding:17px;margin-top:14px}
+.small{font-size:12px;color:var(--muted)}
+.error{color:#ff9c82;font-size:13px;line-height:1.6}
+@media(min-width:500px){
+  .prayer-grid{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">☪ Nur Vakti</div>
+  <button class="location-btn" id="locationButton">📍 <span id="locationLabel">Konum seç</span></button>
+</header>
+
+<main>
+  <section id="home" class="page active">
+    <div class="card next-prayer">
+      <div class="date-text" id="gregorianDate">Tarih yükleniyor...</div>
+      <div class="clock" id="clock">00:00:00</div>
+      <div class="date-text">Sonraki namaz</div>
+      <div class="next-name" id="nextPrayer">Yükleniyor</div>
+      <p id="countdown" class="muted">Namaz vakitleri bekleniyor</p>
+      <div class="date-text" id="hijriDate"></div>
+    </div>
+
+    <div class="card">
+      <h2>🕌 Günlük Namaz Vakitleri</h2>
+      <div id="prayerGrid" class="prayer-grid">
+        <p class="muted">Vakitler yükleniyor...</p>
+      </div>
+      <p class="muted" id="methodInfo">Vakitler internet üzerinden alınır.</p>
+      <button class="btn-outline full" onclick="loadPrayerTimes()">↻ Vakitleri yenile</button>
+    </div>
+
+    <div class="card">
+      <h2>📖 Günün Ayeti</h2>
+      <p class="verse-text" id="dailyVerse"></p>
+      <p class="muted" id="verseSource"></p>
+      <button class="btn-outline" onclick="showPage('verses')">Diğer ayetler</button>
+    </div>
+
+    <div class="card">
+      <h2>🤲 Günün Duası</h2>
+      <p id="dailyDua" class="verse-text"></p>
+      <p id="dailyDuaMeaning" class="muted"></p>
+      <button class="btn-outline" onclick="showPage('duas')">Dua koleksiyonu</button>
+    </div>
+  </section>
+
+  <section id="tesbih" class="page">
+    <div class="card center">
+      <h2>📿 Dijital Tesbih</h2>
+      <p class="muted">Zikrine niyet et ve saymaya başla.</p>
+      <div class="counter" id="counter">0</div>
+      <button class="counter-btn" onclick="countTasbih()">ZİKİR ÇEK</button>
+      <p class="muted" style="margin-top:20px">Hedef: <strong id="targetLabel">33</strong></p>
+      <button class="btn-outline" onclick="changeTarget()">Hedefi değiştir</button>
+      <button class="btn-outline" onclick="resetTasbih()">Sıfırla</button>
+    </div>
+    <div class="card">
+      <h2>Güzel Zikirler</h2>
+      <div class="list-item">سُبْحَانَ اللّٰهِ <br><span class="muted">Sübhanallah — Allah'ı eksikliklerden tenzih ederim.</span></div>
+      <div class="list-item">الْحَمْدُ لِلّٰهِ <br><span class="muted">Elhamdülillah — Hamd Allah'a mahsustur.</span></div>
+      <div class="list-item">اللّٰهُ أَكْبَرُ <br><span class="muted">Allahu ekber — Allah en büyüktür.</span></div>
+      <div class="list-item">أَسْتَغْفِرُ اللّٰهَ <br><span class="muted">Estağfirullah — Allah'tan bağışlanma dilerim.</span></div>
+    </div>
+  </section>
+
+  <section id="duas" class="page">
+    <div class="card">
+      <h2>🤲 Dualar</h2>
+      <p class="muted">Günlük hayatta okuyabileceğin dualar.</p>
+      <div id="duaList"></div>
+    </div>
+  </section>
+
+  <section id="verses" class="page">
+    <div class="card">
+      <h2>📖 Ayetler</h2>
+      <p class="muted">Kur'an-ı Kerim'den seçilmiş ayetler ve sure bilgileri.</p>
+      <div id="verseList"></div>
+    </div>
+  </section>
+
+  <section id="favorites" class="page">
+    <div class="card">
+      <h2>⭐ Favorilerim</h2>
+      <div id="favoriteList"><p class="muted">Henüz favori eklemedin.</p></div>
+    </div>
+  </section>
+
+  <section id="premium" class="page">
+    <div class="card center">
+      <div style="font-size:44px">👑</div>
+      <h2>Nur Vakti Premium</h2>
+      <p class="muted">Nur Vakti için üyelik seçenekleri.</p>
+      <div class="premium-card">
+        <h3>⭐ Aylık Premium</h3>
+        <div class="premium-price">39,99 TL</div>
+        <p class="muted">Aylık üyelik seçeneği</p>
+        <button class="btn full" onclick="premiumInfo('Aylık Premium','39,99 TL')">Aylık üyeliği seç</button>
+      </div>
+      <div class="premium-card">
+        <h3>👑 Yıllık Premium</h3>
+        <div class="premium-price">299,99 TL</div>
+        <p class="muted">Yıllık üyelik seçeneği</p>
+        <button class="btn full" onclick="premiumInfo('Yıllık Premium','299,99 TL')">Yıllık üyeliği seç</button>
+      </div>
+      <p class="small" style="margin-top:18px">Bu ekran bir taslaktır. Gerçek ödeme, abonelik ve Premium özellikleri henüz etkin değildir.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="nav">
+  <button class="active" data-page="home" onclick="showPage('home',this)"><b>⌂</b>Ana sayfa</button>
+  <button data-page="tesbih" onclick="showPage('tesbih',this)"><b>📿</b>Tesbih</button>
+  <button data-page="duas" onclick="showPage('duas',this)"><b>🤲</b>Dualar</button>
+  <button data-page="verses" onclick="showPage('verses',this)"><b>📖</b>Ayetler</button>
+  <button data-page="favorites" onclick="showPage('favorites',this)"><b>☆</b>Favoriler</button>
+  <button data-page="premium" onclick="showPage('premium',this)"><b>♛</b>Premium</button>
+</nav>
+
+<div class="modal" id="locationModal">
+  <div class="modal-box">
+    <div class="close-row">
+      <h2>📍 Konum seç</h2>
+      <button onclick="closeLocation()">×</button>
+    </div>
+    <p class="muted">Namaz vakitlerini görmek istediğin ili ve ilçeyi seç.</p>
+    <label for="provinceSelect">İl</label>
+    <select id="provinceSelect"><option value="">İller yükleniyor...</option></select>
+    <label for="districtSelect">İlçe</label>
+    <select id="districtSelect"><option value="">Önce il seç</option></select>
+    <p id="locationError" class="error"></p>
+    <button class="btn full" onclick="saveLocation()">Konumu kaydet</button>
+    <button class="btn-outline full" onclick="useDeviceLocation()">Cihaz konumunu kullan</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const prayers = [
+  ["İmsak","Fajr"],["Güneş","Sunrise"],["Öğle","Dhuhr"],
+  ["İkindi","Asr"],["Akşam","Maghrib"],["Yatsı","Isha"]
+];
+
+const verses = [
+  {id:"v1",title:"Bakara Suresi, 286. ayet",text:"Allah hiçbir kimseyi gücünün yetmediği bir şeyle yükümlü kılmaz.",meaning:"Bakara 2:286 — Ayetin anlamından bir bölüm."},
+  {id:"v2",title:"İnşirah Suresi, 5-6. ayetler",text:"Şüphesiz güçlükle beraber bir kolaylık vardır.",meaning:"İnşirah 94:5-6 — Ayetlerin anlamından bir bölüm."},
+  {id:"v3",title:"Ra'd Suresi, 28. ayet",text:"Kalpler ancak Allah'ı anmakla huzur bulur.",meaning:"Ra'd 13:28 — Ayetin anlamından bir bölüm."},
+  {id:"v4",title:"Bakara Suresi, 152. ayet",text:"Beni anın ki ben de sizi anayım.",meaning:"Bakara 2:152 — Ayetin anlamından bir bölüm."},
+  {id:"v5",title:"Talak Suresi, 3. ayet",text:"Kim Allah'a tevekkül ederse O, ona yeter.",meaning:"Talak 65:3 — Ayetin anlamından bir bölüm."}
+];
+
+const duas = [
+  {id:"d1",title:"Yemekten önce",text:"بِسْمِ اللّٰهِ",read:"Bismillah.",meaning:"Allah'ın adıyla."},
+  {id:"d2",title:"Yemekten sonra",text:"الْحَمْدُ لِلّٰهِ",read:"Elhamdülillah.",meaning:"Hamd Allah'a mahsustur."},
+  {id:"d3",title:"İlim duası",text:"رَبِّ زِدْنِي عِلْمًا",read:"Rabbi zidnî ilmâ.",meaning:"Rabbim, ilmimi artır."},
+  {id:"d4",title:"Bağışlanma duası",text:"أَسْتَغْفِرُ اللّٰهَ وَأَتُوبُ إِلَيْهِ",read:"Estağfirullahe ve etûbü ileyh.",meaning:"Allah'tan bağışlanma diler ve O'na tövbe ederim."},
+  {id:"d5",title:"Selamet duası",text:"رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",read:"Rabbena âtinâ fid-dünyâ haseneten ve fil-âhireti haseneten ve kınâ azâben-nâr.",meaning:"Rabbimiz! Bize dünyada da iyilik, ahirette de iyilik ver ve bizi ateş azabından koru."}
+];
+
+let provinceData = [];
+let selectedProvince = "";
+let selectedDistrict = "";
+let timings = null;
+let countdownTimer = null;
+let tasbihCount = Number(localStorage.getItem("nur_tasbih") || 0);
+let tasbihTarget = Number(localStorage.getItem("nur_target") || 33);
+let favorites = JSON.parse(localStorage.getItem("nur_favorites") || "[]");
+
+function showPage(id, button) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  $(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+  const active = button || document.querySelector('.nav button[data-page="' + id + '"]');
+  if (active) active.classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function updateClock() {
+  const now = new Date();
+  $("clock").textContent = now.toLocaleTimeString("tr-TR",{hour12:false});
+  $("gregorianDate").textContent = now.toLocaleDateString("tr-TR",{
+    weekday:"long",year:"numeric",month:"long",day:"numeric"
+  });
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function closeLocation() {$("locationModal").classList.remove("show");}
+$("locationButton").onclick = () => {
+  $("locationModal").classList.add("show");
+  if (!provinceData.length) loadProvinces();
+};
+
+async function loadProvinces() {
+  const sel = $("provinceSelect");
+  sel.innerHTML = '<option value="">İller yükleniyor...</option>';
+  $("locationError").textContent = "";
+  try {
+    const res = await fetch("https://api.turkiyeapi.dev/v1/provinces");
+    if (!res.ok) throw new Error("İl listesi alınamadı.");
+    const json = await res.json();
+    provinceData = Array.isArray(json.data) ? json.data : [];
+    if (!provinceData.length) throw new Error("İl listesi boş geldi.");
+    provinceData.sort((a,b) => a.name.localeCompare(b.name,"tr"));
+    sel.innerHTML = '<option value="">İl seç</option>';
+    provinceData.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+    if (selectedProvince) sel.value = String(selectedProvince);
+    if (sel.value) fillDistricts();
+  } catch (e) {
+    sel.innerHTML = '<option value="">İl listesi yüklenemedi</option>';
+    $("locationError").textContent = "İlçe listesini yüklemek için internet bağlantını kontrol edip tekrar dene.";
+  }
+}
+
+function fillDistricts() {
+  const id = Number($("provinceSelect").value);
+  const province = provinceData.find(p => Number(p.id) === id);
+  const sel = $("districtSelect");
+  sel.innerHTML = '<option value="">İlçe seç</option>';
+  if (!province) return;
+  const districts = province.districts || [];
+  districts.slice().sort((a,b) => {
+    const an = typeof a === "string" ? a : a.name;
+    const bn = typeof b === "string" ? b : b.name;
+    return an.localeCompare(bn,"tr");
+  }).forEach(d => {
+    const name = typeof d === "string" ? d : d.name;
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  if (selectedDistrict) sel.value = selectedDistrict;
+}
+$("provinceSelect").addEventListener("change", () => {
+  selectedDistrict = "";
+  fillDistricts();
+});
+
+async function saveLocation() {
+  const id = Number($("provinceSelect").value);
+  const province = provinceData.find(p => Number(p.id) === id);
+  const district = $("districtSelect").value;
+  if (!province || !district) {
+    $("locationError").textContent = "Lütfen önce il ve ilçe seç.";
+    return;
+  }
+  selectedProvince = province.name;
+  selectedDistrict = district;
+  localStorage.setItem("nur_province",selectedProvince);
+  localStorage.setItem("nur_district",selectedDistrict);
+  $("locationLabel").textContent = district + ", " + province.name;
+  closeLocation();
+  await loadPrayerTimes();
+}
+
+async function useDeviceLocation() {
+  if (!navigator.geolocation) {
+    $("locationError").textContent = "Cihaz konumu bu tarayıcıda desteklenmiyor.";
+    return;
+  }
+  $("locationError").textContent = "Konum bekleniyor...";
+  navigator.geolocation.getCurrentPosition(async pos => {
+    try {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      const r = await fetch("https://api.aladhan.com/v1/timings?latitude="+lat+"&longitude="+lon+"&method=13");
+      const j = await r.json();
+      if (j.code !== 200) throw new Error();
+      timings = j.data.timings;
+      $("locationLabel").textContent = "Cihaz konumu";
+      closeLocation();
+      renderTimings(j.data);
+    } catch(e) {
+      $("locationError").textContent = "Konum vakitleri alınamadı. İl ve ilçe seçmeyi dene.";
+    }
+  }, () => {
+    $("locationError").textContent = "Konum izni verilmedi. İl ve ilçe seçebilirsin.";
+  }, {enableHighAccuracy:false,timeout:12000});
+}
+
+async function loadPrayerTimes() {
+  if (!selectedProvince || !selectedDistrict) {
+    $("prayerGrid").innerHTML = '<p class="muted">Önce sağ üstten il ve ilçe seç.</p>';
+    $("nextPrayer").textContent = "Konum seç";
+    return;
+  }
+  $("prayerGrid").innerHTML = '<p class="muted">Namaz vakitleri alınıyor...</p>';
+  try {
+    const url = "https://api.aladhan.com/v1/timingsByCity?city="+
+      encodeURIComponent(selectedDistrict)+"&country=Turkey&method=13";
+    const res = await fetch(url);
+    if (!res.ok) throw new Error();
+    const json = await res.json();
+    if (json.code !== 200) throw new Error();
+    timings = json.data.timings;
+    $("methodInfo").textContent = "Konum: "+selectedDistrict+", "+selectedProvince+
+      " • Vakit kaynağı: AlAdhan. Yerel Diyanet takvimiyle küçük farklılıklar olabilir.";
+    renderTimings(json.data);
+  } catch(e) {
+    $("prayerGrid").innerHTML = '<p class="error">Namaz vakitleri alınamadı. İnternet bağlantını kontrol edip tekrar dene.</p>';
+    $("nextPrayer").textContent = "Vakit alınamadı";
+    $("countdown").textContent = "";
+  }
+}
+
+function renderTimings(data) {
+  timings = data.timings || data;
+  const grid = $("prayerGrid");
+  grid.innerHTML = "";
+  prayers.forEach(([name,key]) => {
+    const raw = timings[key] || "--:--";
+    const time = String(raw).match(/\d{1,2}:\d{2}/)?.[0] || "--:--";
+    const div = document.createElement("div");
+    div.className = "prayer";
+    const n = document.createElement("span"); n.textContent = name;
+    const t = document.createElement("strong"); t.textContent = time;
+    div.append(n,t); grid.appendChild(div);
+  });
+  if (data.date && data.date.hijri) {
+    const h = data.date.hijri;
+    $("hijriDate").textContent = [h.day,h.month && h.month.ar,h.year,"H"].filter(Boolean).join(" ");
+  }
+  updateNextPrayer();
+}
+
+function updateNextPrayer() {
+  if (!timings) return;
+  const now = new Date();
+  let upcoming = null;
+  for (const [name,key] of prayers) {
+    if (key === "Sunrise") continue;
+    const t = timings[key];
+    if (!t) continue;
+    const m = String(t).match(/(\d{1,2}):(\d{2})/);
+    if (!m) continue;
+    const d = new Date();
+    d.setHours(Number(m[1]),Number(m[2]),0,0);
+    if (d > now) {upcoming = {name,time:d};break;}
+  }
+  if (!upcoming) {
+    const fajr = String(timings.Fajr || "05:00").match(/(\d{1,2}):(\d{2})/);
+    const d = new Date();
+    d.setDate(d.getDate()+1);
+    if (fajr) d.setHours(Number(fajr[1]),Number(fajr[2]),0,0);
+    upcoming = {name:"İmsak",time:d};
+  }
+  $("nextPrayer").textContent = upcoming.name;
+  const ms = upcoming.time - now;
+  const h = Math.floor(ms/3600000);
+  const m = Math.floor((ms%3600000)/60000);
+  const s = Math.floor((ms%60000)/1000);
+  $("countdown").textContent = "Kalan süre: "+h+" saat "+m+" dakika "+s+" saniye";
+}
+setInterval(updateNextPrayer,1000);
+
+function countTasbih() {
+  tasbihCount++;
+  localStorage.setItem("nur_tasbih",tasbihCount);
+  $("counter").textContent = tasbihCount;
+  if (tasbihCount % tasbihTarget === 0) {
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+}
+function resetTasbih() {
+  if (!confirm("Tesbih sayısını sıfırlamak istiyor musun?")) return;
+  tasbihCount = 0;
+  localStorage.setItem("nur_tasbih",0);
+  $("counter").textContent = 0;
+}
+function changeTarget() {
+  const value = prompt("Tesbih hedefini gir (ör. 33, 99, 100):",tasbihTarget);
+  if (value === null) return;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 100000) {
+    alert("1 ile 100000 arasında bir tam sayı gir.");
+    return;
+  }
+  tasbihTarget = n;
+  localStorage.setItem("nur_target",n);
+  $("targetLabel").textContent = n;
+}
+
+function renderVerses() {
+  $("dailyVerse").textContent = verses[new Date().getDate()%verses.length].text;
+  $("verseSource").textContent = verses[new Date().getDate()%verses.length].meaning;
+  $("verseList").innerHTML = "";
+  verses.forEach(v => {
+    const div = document.createElement("div");
+    div.className = "list-item";
+    const h = document.createElement("h3"); h.className = "gold"; h.textContent = v.title;
+    const p = document.createElement("p"); p.textContent = v.text;
+    const small = document.createElement("p"); small.className = "muted"; small.textContent = v.meaning;
+    const btn = document.createElement("button"); btn.className = "heart";
+    btn.textContent = favorites.includes(v.id) ? "★" : "☆";
+    btn.setAttribute("aria-label","Favorilere ekle veya çıkar");
+    btn.onclick = () => toggleFavorite(v.id);
+    div.append(h,p,small,btn); $("verseList").appendChild(div);
+  });
+}
+
+function renderDuas() {
+  const daily = duas[new Date().getDate()%duas.length];
+  $("dailyDua").textContent = daily.text;
+  $("dailyDuaMeaning").textContent = daily.read + " " + daily.meaning;
+  $("duaList").innerHTML = "";
+  duas.forEach(d => {
+    const div = document.createElement("div"); div.className = "list-item";
+    const h = document.createElement("h3"); h.className = "gold"; h.textContent = d.title;
+    const p = document.createElement("p"); p.className = "verse-text"; p.textContent = d.text;
+    const read = document.createElement("p"); read.className = "muted"; read.textContent = d.read;
+    const meaning = document.createElement("p"); meaning.textContent = d.meaning;
+    const btn = document.createElement("button"); btn.className = "heart";
+    btn.textContent = favorites.includes(d.id) ? "★" : "☆";
+    btn.onclick = () => toggleFavorite(d.id);
+    div.append(h,p,read,meaning,btn); $("duaList").appendChild(div);
+  });
+}
+
+function toggleFavorite(id) {
+  favorites = favorites.includes(id) ? favorites.filter(x => x !== id) : [...favorites,id];
+  localStorage.setItem("nur_favorites",JSON.stringify(favorites));
+  renderVerses(); renderDuas(); renderFavorites();
+}
+
+function renderFavorites() {
+  const container = $("favoriteList");
+  container.innerHTML = "";
+  const all = [...verses,...duas];
+  const saved = all.filter(x => favorites.includes(x.id));
+  if (!saved.length) {
+    container.innerHTML = '<p class="muted">Henüz favori eklemedin. Ayetlerdeki veya dualardaki ☆ simgesine bas.</p>';
+    return;
+  }
+  saved.forEach(item => {
+    const div = document.createElement("div"); div.className = "list-item";
+    const h = document.createElement("h3"); h.className = "gold"; h.textContent = item.title;
+    const p = document.createElement("p"); p.textContent = item.text;
+    const btn = document.createElement("button"); btn.className = "heart"; btn.textContent = "★";
+    btn.onclick = () => toggleFavorite(item.id);
+    div.append(h,p,btn); container.appendChild(div);
+  });
+}
+
+function premiumInfo(plan,price) {
+  alert(plan+"\nFiyat: "+price+
+    "\n\nBu uygulamada ödeme sistemi henüz bağlı değil. Bu düğme ödeme almaz ve üyelik başlatmaz.");
+}
+
+async function init() {
+  $("counter").textContent = tasbihCount;
+  $("targetLabel").textContent = tasbihTarget;
+  renderVerses(); renderDuas(); renderFavorites();
+
+  selectedProvince = localStorage.getItem("nur_province") || "";
+  selectedDistrict = localStorage.getItem("nur_district") || "";
+  if (selectedProvince && selectedDistrict) {
+    $("locationLabel").textContent = selectedDistrict+", "+selectedProvince;
+    loadPrayerTimes();
+  } else {
+    $("locationLabel").textContent = "Konum seç";
+    $("prayerGrid").innerHTML = '<p class="muted">Başlamak için sağ üstten il ve ilçe seç.</p>';
+  }
+}
+init();
+
+/* NUR VAKTİ — BİLDİRİM MODÜLÜ */
+
+const notificationSettings = {
+  prayer: true,
+  morning: false,
+  evening: false,
+  friday: false
+};
+
+function addNotificationSettings() {
+  if (document.getElementById("notificationSettings")) return;
+
+  const section = document.createElement("section");
+  section.id = "notificationSettings";
+  section.className = "page";
+
+  section.innerHTML = `
+    <div class="card">
+      <h2>🔔 Bildirim Ayarları</h2>
+      <p class="muted">
+        Hatırlatmaları aç. Bildirim izni cihazın ve tarayıcının
+        desteklediği ölçüde kullanılabilir.
+      </p>
+
+      <label class="notification-option">
+        <span>🕌 Namaz vakti hatırlatmaları</span>
+        <input type="checkbox" id="notifyPrayer" checked>
+      </label>
+
+      <label class="notification-option">
+        <span>🌅 Sabah zikri</span>
+        <input type="checkbox" id="notifyMorning">
+      </label>
+
+      <label class="notification-option">
+        <span>🌙 Akşam zikri</span>
+        <input type="checkbox" id="notifyEvening">
+      </label>
+
+      <label class="notification-option">
+        <span>🤲 Cuma hatırlatması</span>
+        <input type="checkbox" id="notifyFriday">
+      </label>
+
+      <button class="btn full" id="saveNotificationSettings">
+        Bildirimleri etkinleştir
+      </button>
+      <button class="btn-outline full" id="testNotification">
+        Test bildirimi gönder
+      </button>
+
+      <p class="muted" id="notificationStatus"></p>
+    </div>
+  `;
+
+  document.querySelector("main").appendChild(section);
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .notification-option {
+      display:flex; justify-content:space-between;
+      align-items:center; gap:12px;
+      padding:15px 0; border-bottom:1px solid #37301d;
+      color:#fff;
+    }
+    .notification-option input {
+      accent-color:#e8c15d;
+      width:20px; height:20px;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const nav = document.querySelector(".nav");
+  const button = document.createElement("button");
+  button.dataset.page = "notificationSettings";
+  button.innerHTML = "<b>🔔</b>Bildirim";
+  button.onclick = () => showPage("notificationSettings", button);
+  nav.appendChild(button);
+
+  document.getElementById("saveNotificationSettings")
+    .addEventListener("click", async () => {
+      const status = document.getElementById("notificationStatus");
+
+      if (!("Notification" in window)) {
+        status.textContent =
+          "Bu tarayıcı bildirimleri desteklemiyor. Uygulamayı desteklenen bir tarayıcıda açmayı dene.";
+        return;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+
+        if (permission !== "granted") {
+          status.textContent =
+            "Bildirim izni verilmedi. Tarayıcı ayarlarından izin verebilirsin.";
+          return;
+        }
+
+        notificationSettings.prayer =
+          document.getElementById("notifyPrayer").checked;
+        notificationSettings.morning =
+          document.getElementById("notifyMorning").checked;
+        notificationSettings.evening =
+          document.getElementById("notifyEvening").checked;
+        notificationSettings.friday =
+          document.getElementById("notifyFriday").checked;
+
+        status.textContent =
+          "Bildirim izni alındı. Bu ayarlar tek başına uygulama kapalıyken bildirim garantisi vermez.";
+
+        localStorage.setItem(
+          "nur_notification_settings",
+          JSON.stringify(notificationSettings)
+        );
+      } catch (error) {
+        status.textContent = "Bildirim izni alınamadı.";
+      }
+    });
+
+  document.getElementById("testNotification")
+    .addEventListener("click", () => {
+      const status = document.getElementById("notificationStatus");
+
+      if (!("Notification" in window) ||
+          Notification.permission !== "granted") {
+        status.textContent =
+          "Önce bildirim iznini etkinleştir.";
+        return;
+      }
+
+      new Notification("☪️ Nur Vakti", {
+        body: "Bildirim testi başarılı. Allah gününü hayırlı kılsın."
+      });
+
+      status.textContent = "Test bildirimi gönderildi.";
+    });
+
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("nur_notification_settings") || "null"
+    );
+
+    if (saved) {
+      Object.assign(notificationSettings, saved);
+      document.getElementById("notifyPrayer").checked = !!saved.prayer;
+      document.getElementById("notifyMorning").checked = !!saved.morning;
+      document.getElementById("notifyEvening").checked = !!saved.evening;
+      document.getElementById("notifyFriday").checked = !!saved.friday;
+    }
+  } catch (error) {
+    console.warn("Bildirim ayarları yüklenemedi.");
+  }
+}
+
+addNotificationSettings();
+
+</script>
+</body>
+</html>
